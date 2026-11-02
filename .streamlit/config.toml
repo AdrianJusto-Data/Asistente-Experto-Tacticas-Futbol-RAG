@@ -1,0 +1,9 @@
+[theme]
+primaryColor = "#10b981"        # Verde césped / acento
+backgroundColor = "#0e1117"     # Fondo oscuro elegante
+secondaryBackgroundColor = "#262730"
+textColor = "#fafafa"
+font = "sans serif"
+
+[server]
+enableStaticServing = true

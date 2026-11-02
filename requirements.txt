@@ -1,0 +1,23 @@
+# Core
+langchain>=0.3
+langchain-core>=0.3
+langchain-community>=0.3
+langchain-google-genai>=2.0
+langchain-chroma>=0.2
+langgraph>=0.2
+chromadb>=1.0
+
+# Google AI
+google-genai>=1.0
+
+# Ingesta
+pymupdf>=1.24
+pyyaml>=6.0
+trafilatura>=1.12
+requests>=2.32
+
+# Streamlit (OBLIGATORIO)
+streamlit>=1.40
+
+# Utilidades
+python-dotenv>=1.0

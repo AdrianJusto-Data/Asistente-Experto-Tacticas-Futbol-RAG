@@ -1,0 +1,53 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# --- Entorno virtual ---
+.venv/
+venv/
+env/
+
+# --- Secrets ---
+api.env
+.env
+*.env.local
+.streamlit/secrets.toml
+
+# --- Vector store (se reconstruye con @st.cache_resource en Cloud) ---
+chroma_db*/
+!chroma_db/.gitkeep
+
+# --- Notebooks ---
+.ipynb_checkpoints/
+*.nbconvert.ipynb
+
+# --- VS Code / sistema ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- Logs ---
+*.log
+
+# --- Datos pesados que NO queremos en el repo público ---
+data/00_libro/*.pdf
+data/00_libro/La pirámide invertida PDF.pdf
+HANDOFF.md
+Proyecto IA Generativa*.pdf
+
+# --- Tests temporales y scripts de diagnóstico (no necesarios en el repo final) ---
+test_graph_smoke.py
+test_chat_commands.py
+comparar_busqueda.py
+ver_top4.py
