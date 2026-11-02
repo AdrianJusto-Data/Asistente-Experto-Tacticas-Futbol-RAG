@@ -47,11 +47,11 @@ Cada `.md` cumple un **contrato de front matter** común (`id`, `fuente`, `era`,
 
 ```mermaid
 flowchart LR
-    U([👤 Usuario]) --> R[🧭 reformular<br/><i>reescribe anáforas</i>]
-    R --> T[🔍 retrieve<br/><i>MMR k=4</i>]
-    T --> G[🧠 generate<br/><i>SYSTEM_PROMPT_V5<br/>ficha | conceptual</i>]
-    G --> A([🤖 Respuesta])
-    M[(💾 MemorySaver<br/>thread_id)] -.-> R
+    U(["👤 Usuario"]) --> R["🧭 reformular<br/>reescribe anáforas"]
+    R --> T["🔍 retrieve<br/>MMR k=4"]
+    T --> G["🧠 generate<br/>SYSTEM_PROMPT_V5<br/>ficha · conceptual"]
+    G --> A(["🤖 Respuesta"])
+    M[("💾 MemorySaver<br/>thread_id")] -.-> R
     M -.-> T
     M -.-> G
     classDef node fill:#1e293b,stroke:#6E4AFF,stroke-width:2px,color:#fff
