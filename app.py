@@ -62,7 +62,6 @@ def set_prompt(texto):
 # Sidebar y Selector de Modelo
 # ---------------------------------------------------------------------------
 with st.sidebar:
-    # Corregido: buscamos "Icono.png" (o jpg, según lo tengas)
     icono_path = DATA_DIR / "imagenes" / "Icono.png"
     if icono_path.exists():
         _, col_icon, _ = st.columns([1, 2, 1])
@@ -87,14 +86,13 @@ with st.sidebar:
     )
 
 # ---------------------------------------------------------------------------
-# Backend cacheado (Limpio de elementos visuales)
+# Backend cacheado (100% limpio, sin elementos visuales)
 # ---------------------------------------------------------------------------
 @st.cache_resource(show_spinner=False)
 def _init_backend(model_name: str):
     docs = cargar_todo()
     descomprimido = False
 
-    # ── Seed empaquetado (solo si no hay persist local) ──
     if not (PERSIST_DIR.exists() and any(PERSIST_DIR.iterdir())):
         seed_zip = PERSIST_DIR.parent / f"{PERSIST_DIR.name}.zip"
         if seed_zip.exists():
@@ -108,24 +106,24 @@ def _init_backend(model_name: str):
         vs = build_chroma(docs, pausa_entre_lotes_seg=0)
 
     graph = build_graph(vs, model_name=model_name)
-
+    
     tacticas = sorted(list(set(
         d.metadata.get("tactica") for d in docs
         if d.metadata.get("tactica") and d.metadata.get("fuente") == "curado"
     )))
 
-    # Forzamos rutas absolutas para evitar problemas en Cloud
-    imagenes = sorted([
+    # Obtenemos solo las rutas, NO las cargamos en memoria aquí.
+    imagenes_paths = sorted([
         p.resolve() for p in (DATA_DIR / "imagenes").glob("*.*")
         if p.suffix.lower() in [".png", ".jpg", ".jpeg"] and "icono" not in p.name.lower()
     ])
 
-    return graph, len(docs), resumen_por_fuente(docs), tacticas, imagenes, descomprimido
+    return graph, len(docs), resumen_por_fuente(docs), tacticas, imagenes_paths, descomprimido
 
+# Elementos visuales FUERA de la función cacheada
 with st.spinner("⏳ Inicializando base de conocimiento…"):
-    graph, n_docs, resumen, tacticas, imagenes, descomprimido = _init_backend(modelo_sel)
+    graph, n_docs, resumen, tacticas, imagenes_paths, descomprimido = _init_backend(modelo_sel)
 
-# Mostramos el toast FUERA de la función cacheada
 if descomprimido:
     st.toast("✅ Vectorstore listo (seed empaquetado)", icon="📦")
 
@@ -142,11 +140,10 @@ def _imagenes_locales(docs, texto_respuesta=""):
                 imagenes_res.append(p)
                 
     texto_lower = texto_respuesta.lower()
-    todas = list((DATA_DIR / "imagenes").glob("*.png"))
-    for img_path in todas:
+    for img_path in imagenes_paths:
         nombre_limpio = img_path.stem.replace("_", " ").lower()
-        if nombre_limpio in texto_lower and img_path.resolve() not in imagenes_res:
-            imagenes_res.append(img_path.resolve())
+        if nombre_limpio in texto_lower and img_path not in imagenes_res:
+            imagenes_res.append(img_path)
     return imagenes_res
 
 def _limpiar_linea_imagen(texto: str, hay_imagen_local: bool) -> str:
@@ -242,7 +239,6 @@ with tab_chat:
         for i, ej in enumerate(ejemplos):
             cols[i].button(ej, on_click=set_prompt, args=(ej,), use_container_width=True)
 
-    # Sugerencias de preguntas
     preguntas_sugeridas = [
         "¿Qué es el Catenaccio y qué formación base usaba?",
         "¿Y quién fue su entrenador?",
@@ -306,17 +302,16 @@ with tab_catalogo:
     st.header("Galería de Tácticas")
     st.caption("Explora visualmente las formaciones y tácticas. Haz clic en 'Preguntar' para que el asistente te explique los detalles.")
     
-    # Cuadrícula de 3 columnas
     cols = st.columns(3)
-    for i, img_path in enumerate(imagenes):
+    for i, img_path in enumerate(imagenes_paths):
         with cols[i % 3]:
-            # Forzamos la lectura del archivo en binario para evitar problemas de rutas en Linux
+            # Leemos la imagen directamente en binario para forzar su carga
             try:
                 with open(img_path, "rb") as f:
                     img_bytes = f.read()
                 st.image(img_bytes, width="stretch")
             except Exception as e:
-                st.error(f"Error cargando {img_path.name}: {e}")
+                st.error(f"Error al cargar {img_path.name}")
             
             nombre_limpio = img_path.stem.replace("_", " ").title()
             st.markdown(f"**{nombre_limpio}**")
