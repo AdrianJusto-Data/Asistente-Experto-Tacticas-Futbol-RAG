@@ -62,6 +62,7 @@ def set_prompt(texto):
 # Sidebar y Selector de Modelo
 # ---------------------------------------------------------------------------
 with st.sidebar:
+    # Corregido: buscamos "Icono.png" (o jpg, según lo tengas)
     icono_path = DATA_DIR / "imagenes" / "Icono.png"
     if icono_path.exists():
         _, col_icon, _ = st.columns([1, 2, 1])
@@ -78,7 +79,6 @@ with st.sidebar:
 
     st.divider()
     
-    # Selector de modelo
     st.markdown("### 🧠 Motor de IA")
     modelo_sel = st.selectbox(
         "Selecciona el modelo:",
@@ -87,20 +87,20 @@ with st.sidebar:
     )
 
 # ---------------------------------------------------------------------------
-# Backend cacheado (Depende del modelo elegido)
+# Backend cacheado (Limpio de elementos visuales)
 # ---------------------------------------------------------------------------
 @st.cache_resource(show_spinner=False)
 def _init_backend(model_name: str):
     docs = cargar_todo()
+    descomprimido = False
 
     # ── Seed empaquetado (solo si no hay persist local) ──
     if not (PERSIST_DIR.exists() and any(PERSIST_DIR.iterdir())):
         seed_zip = PERSIST_DIR.parent / f"{PERSIST_DIR.name}.zip"
         if seed_zip.exists():
-            with st.spinner("📦 Descomprimiendo vectorstore precalculado…"):
-                with zipfile.ZipFile(seed_zip, "r") as zf:
-                    zf.extractall(PERSIST_DIR.parent)
-            st.toast("✅ Vectorstore listo (seed empaquetado)", icon="📦")
+            with zipfile.ZipFile(seed_zip, "r") as zf:
+                zf.extractall(PERSIST_DIR.parent)
+            descomprimido = True
 
     if PERSIST_DIR.exists() and any(PERSIST_DIR.iterdir()):
         vs = get_vectorstore()
@@ -120,10 +120,14 @@ def _init_backend(model_name: str):
         if p.suffix.lower() in [".png", ".jpg", ".jpeg"] and "icono" not in p.name.lower()
     ])
 
-    return graph, len(docs), resumen_por_fuente(docs), tacticas, imagenes
+    return graph, len(docs), resumen_por_fuente(docs), tacticas, imagenes, descomprimido
 
 with st.spinner("⏳ Inicializando base de conocimiento…"):
-    graph, n_docs, resumen, tacticas, imagenes = _init_backend(modelo_sel)
+    graph, n_docs, resumen, tacticas, imagenes, descomprimido = _init_backend(modelo_sel)
+
+# Mostramos el toast FUERA de la función cacheada
+if descomprimido:
+    st.toast("✅ Vectorstore listo (seed empaquetado)", icon="📦")
 
 # ---------------------------------------------------------------------------
 # Helpers visuales
@@ -133,7 +137,7 @@ def _imagenes_locales(docs, texto_respuesta=""):
     for d in docs:
         url = d.metadata.get("imagen_url") or ""
         if url and not url.startswith("http"):
-            p = (DATA_DIR / url).resolve() # Forzamos ruta absoluta
+            p = (DATA_DIR / url).resolve()
             if p.exists() and p not in imagenes_res:
                 imagenes_res.append(p)
                 
@@ -238,7 +242,7 @@ with tab_chat:
         for i, ej in enumerate(ejemplos):
             cols[i].button(ej, on_click=set_prompt, args=(ej,), use_container_width=True)
 
-    # Sugerencias de preguntas (FIX: Usar set_prompt para disparar el flujo)
+    # Sugerencias de preguntas
     preguntas_sugeridas = [
         "¿Qué es el Catenaccio y qué formación base usaba?",
         "¿Y quién fue su entrenador?",
@@ -302,7 +306,7 @@ with tab_catalogo:
     st.header("Galería de Tácticas")
     st.caption("Explora visualmente las formaciones y tácticas. Haz clic en 'Preguntar' para que el asistente te explique los detalles.")
     
-    # Cuadrícula de 3 columnas (FIX: width="stretch")
+    # Cuadrícula de 3 columnas
     cols = st.columns(3)
     for i, img_path in enumerate(imagenes):
         with cols[i % 3]:
