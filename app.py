@@ -62,6 +62,7 @@ def set_prompt(texto):
 # Sidebar y Selector de Modelo
 # ---------------------------------------------------------------------------
 with st.sidebar:
+    # Corregido: buscamos "Icono.png" (o jpg, según lo tengas)
     icono_path = DATA_DIR / "imagenes" / "Icono.png"
     if icono_path.exists():
         _, col_icon, _ = st.columns([1, 2, 1])
@@ -86,13 +87,14 @@ with st.sidebar:
     )
 
 # ---------------------------------------------------------------------------
-# Backend cacheado (100% limpio, sin elementos visuales)
+# Backend cacheado (Limpio de elementos visuales)
 # ---------------------------------------------------------------------------
 @st.cache_resource(show_spinner=False)
 def _init_backend(model_name: str):
     docs = cargar_todo()
     descomprimido = False
 
+    # ── Seed empaquetado (solo si no hay persist local) ──
     if not (PERSIST_DIR.exists() and any(PERSIST_DIR.iterdir())):
         seed_zip = PERSIST_DIR.parent / f"{PERSIST_DIR.name}.zip"
         if seed_zip.exists():
@@ -106,24 +108,24 @@ def _init_backend(model_name: str):
         vs = build_chroma(docs, pausa_entre_lotes_seg=0)
 
     graph = build_graph(vs, model_name=model_name)
-    
+
     tacticas = sorted(list(set(
         d.metadata.get("tactica") for d in docs
         if d.metadata.get("tactica") and d.metadata.get("fuente") == "curado"
     )))
 
-    # Obtenemos solo las rutas, NO las cargamos en memoria aquí.
-    imagenes_paths = sorted([
+    # Forzamos rutas absolutas
+    imagenes = sorted([
         p.resolve() for p in (DATA_DIR / "imagenes").glob("*.*")
         if p.suffix.lower() in [".png", ".jpg", ".jpeg"] and "icono" not in p.name.lower()
     ])
 
-    return graph, len(docs), resumen_por_fuente(docs), tacticas, imagenes_paths, descomprimido
+    return graph, len(docs), resumen_por_fuente(docs), tacticas, imagenes, descomprimido
 
-# Elementos visuales FUERA de la función cacheada
 with st.spinner("⏳ Inicializando base de conocimiento…"):
-    graph, n_docs, resumen, tacticas, imagenes_paths, descomprimido = _init_backend(modelo_sel)
+    graph, n_docs, resumen, tacticas, imagenes, descomprimido = _init_backend(modelo_sel)
 
+# Mostramos el toast FUERA de la función cacheada
 if descomprimido:
     st.toast("✅ Vectorstore listo (seed empaquetado)", icon="📦")
 
@@ -140,10 +142,11 @@ def _imagenes_locales(docs, texto_respuesta=""):
                 imagenes_res.append(p)
                 
     texto_lower = texto_respuesta.lower()
-    for img_path in imagenes_paths:
+    todas = list((DATA_DIR / "imagenes").glob("*.png"))
+    for img_path in todas:
         nombre_limpio = img_path.stem.replace("_", " ").lower()
-        if nombre_limpio in texto_lower and img_path not in imagenes_res:
-            imagenes_res.append(img_path)
+        if nombre_limpio in texto_lower and img_path.resolve() not in imagenes_res:
+            imagenes_res.append(img_path.resolve())
     return imagenes_res
 
 def _limpiar_linea_imagen(texto: str, hay_imagen_local: bool) -> str:
@@ -175,28 +178,28 @@ def _render_tarjeta_doc(doc_meta: dict, index: int):
 def _render_mensaje(msg: dict) -> None:
     avatar = "👤" if msg["role"] == "user" else "⚽"
     with st.chat_message(msg["role"], avatar=avatar):
-        imagenes = msg.get("imagenes_urls", [])
-        if imagenes:
+        imagenes_urls = msg.get("imagenes_urls", [])
+        if imagenes_urls:
             col_img, col_txt = st.columns([1, 2])
             with col_img:
-                if len(imagenes) == 1:
-                    st.image(str(imagenes[0]), width="stretch")
-                    img_actual = imagenes[0]
+                if len(imagenes_urls) == 1:
+                    st.image(str(imagenes_urls[0]), width="stretch")
+                    img_actual = imagenes_urls[0]
                 else:
                     msg_id = msg.get("id", str(uuid.uuid4()))
                     idx_key = f"img_idx_{msg_id}"
                     if idx_key not in st.session_state:
                         st.session_state[idx_key] = 0
                     idx = st.session_state[idx_key]
-                    img_actual = imagenes[idx]
+                    img_actual = imagenes_urls[idx]
                     st.image(str(img_actual), width="stretch")
                     c1, c2, c3 = st.columns([1, 2, 1])
                     if c1.button("⬅️", key=f"prev_{msg_id}", use_container_width=True):
-                        st.session_state[idx_key] = (idx - 1) % len(imagenes)
+                        st.session_state[idx_key] = (idx - 1) % len(imagenes_urls)
                         st.rerun()
-                    c2.markdown(f"<div style='text-align: center; font-size: 0.9rem; padding-top: 5px;'>{idx+1} / {len(imagenes)}</div>", unsafe_allow_html=True)
+                    c2.markdown(f"<div style='text-align: center; font-size: 0.9rem; padding-top: 5px;'>{idx+1} / {len(imagenes_urls)}</div>", unsafe_allow_html=True)
                     if c3.button("➡️", key=f"next_{msg_id}", use_container_width=True):
-                        st.session_state[idx_key] = (idx + 1) % len(imagenes)
+                        st.session_state[idx_key] = (idx + 1) % len(imagenes_urls)
                         st.rerun()
                 with open(img_actual, "rb") as f:
                     st.download_button("📥 Descargar", data=f, file_name=os.path.basename(img_actual), mime="image/png", key=f"dl_{msg.get('id', str(uuid.uuid4()))}", use_container_width=True)
@@ -302,17 +305,18 @@ with tab_catalogo:
     st.header("Galería de Tácticas")
     st.caption("Explora visualmente las formaciones y tácticas. Haz clic en 'Preguntar' para que el asistente te explique los detalles.")
     
+    # Cuadrícula de 3 columnas
     cols = st.columns(3)
-    for i, img_path in enumerate(imagenes_paths):
+    for i, img_path in enumerate(imagenes):
         with cols[i % 3]:
-            # Leemos la imagen directamente en binario para forzar su carga
             try:
-                with open(img_path, "rb") as f:
-                    img_bytes = f.read()
+                # Leemos la imagen como bytes puros para que Cloud no falle
+                with open(img_path, "rb") as img_file:
+                    img_bytes = img_file.read()
                 st.image(img_bytes, width="stretch")
             except Exception as e:
-                st.error(f"Error al cargar {img_path.name}")
-            
+                st.warning(f"No se pudo cargar la imagen: {img_path.name}")
+                
             nombre_limpio = img_path.stem.replace("_", " ").title()
             st.markdown(f"**{nombre_limpio}**")
             if st.button(f"Preguntar por {nombre_limpio}", key=f"btn_cat_{i}", use_container_width=True):
