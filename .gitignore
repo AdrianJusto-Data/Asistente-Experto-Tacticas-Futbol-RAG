@@ -55,3 +55,4 @@ ver_top4.py
 
 # --- Seed del vectorstore (sí se sube comprimido) ---
 !chroma_db_v4.zip
+demo_asistente_tacticas_historico.ipynb
