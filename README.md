@@ -82,7 +82,10 @@ flowchart LR
 
 ## 🚀 Demo pública
 
-**URL:** <pendiente-url-streamlit-cloud>
+**URL:** [<pendiente-url-streamlit-cloud>](https://Asistente-experto-tacticas-futbol-rag-xuz7x9jvguray8lznairbf.streamlit.app/)
+
+
+La app incluye tres modos de uso: **Chat Inteligente** (con memoria y trazabilidad de documentos), **Catálogo Visual** (galería interactiva de formaciones) y **Búsqueda Guiada** (explorador por filtros en la barra lateral). Se incluyen respuestas generadas en formato ficha y modo conceptua
 
 3 preguntas de prueba:
 
