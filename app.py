@@ -310,7 +310,14 @@ with tab_catalogo:
     cols = st.columns(3)
     for i, img_path in enumerate(imagenes):
         with cols[i % 3]:
-            st.image(str(img_path), width="stretch")
+            # Forzamos la lectura del archivo en binario para evitar problemas de rutas en Linux
+            try:
+                with open(img_path, "rb") as f:
+                    img_bytes = f.read()
+                st.image(img_bytes, width="stretch")
+            except Exception as e:
+                st.error(f"Error cargando {img_path.name}: {e}")
+            
             nombre_limpio = img_path.stem.replace("_", " ").title()
             st.markdown(f"**{nombre_limpio}**")
             if st.button(f"Preguntar por {nombre_limpio}", key=f"btn_cat_{i}", use_container_width=True):
