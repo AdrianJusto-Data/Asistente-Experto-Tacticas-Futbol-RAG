@@ -29,7 +29,7 @@ Agente de IA generativa con RAG sobre táctica futbolística histórica y modern
 
 | Chat Inteligente | Catálogo Visual | Búsqueda Guiada (sidebar) |
 |---|---|---|
-| <pendiente-captura-chat.png> | <pendiente-captura-catalogo.png> | <pendiente-captura-sidebar.png> |
+| ![Chat](docs/screenshots/chat.png) | ![Catálogo](docs/screenshots/catalogo.png) | ![Sidebar](docs/screenshots/sidebar.png) |
 
 ## 📚 Pirámide de Datos (corpus híbrido)
 
