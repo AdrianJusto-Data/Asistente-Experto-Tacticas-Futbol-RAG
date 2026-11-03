@@ -91,28 +91,17 @@ with st.sidebar:
 # ---------------------------------------------------------------------------
 @st.cache_resource(show_spinner=False)
 def _init_backend(model_name: str):
-    import os
-    print(f"[init] cwd={os.getcwd()}")
-    print(f"[init] PERSIST_DIR={PERSIST_DIR} (exists={PERSIST_DIR.exists()}, abs={PERSIST_DIR.resolve()})")
-
     docs = cargar_todo()
 
     # ── Seed empaquetado (solo si no hay persist local) ──
     if not (PERSIST_DIR.exists() and any(PERSIST_DIR.iterdir())):
         seed_zip = PERSIST_DIR.parent / f"{PERSIST_DIR.name}.zip"
-        print(f"[init] seed_zip={seed_zip} (exists={seed_zip.exists()})")
         if seed_zip.exists():
             with st.spinner("📦 Descomprimiendo vectorstore precalculado…"):
                 with zipfile.ZipFile(seed_zip, "r") as zf:
-                    print(f"[init] zip primeros 3 entradas: {zf.namelist()[:3]}")
-                    # Extraer junto a PERSIST_DIR, no en cwd
                     zf.extractall(PERSIST_DIR.parent)
-            print(f"[init] post-extract PERSIST_DIR.exists={PERSIST_DIR.exists()}")
-            if PERSIST_DIR.exists():
-                print(f"[init] contenido: {[p.name for p in PERSIST_DIR.iterdir()][:5]}")
-                st.toast("✅ Vectorstore listo (seed empaquetado)", icon="📦")
+            st.toast("✅ Vectorstore listo (seed empaquetado)", icon="📦")
 
-    print(f"[init] decisión final: PERSIST_DIR.exists={PERSIST_DIR.exists()}")
     if PERSIST_DIR.exists() and any(PERSIST_DIR.iterdir()):
         vs = get_vectorstore()
     else:
