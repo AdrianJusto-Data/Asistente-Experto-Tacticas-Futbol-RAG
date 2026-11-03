@@ -9,6 +9,7 @@ os.environ.setdefault("PAUSA_FALLBACK_SEG", "0")
 import time
 import re
 import uuid
+import zipfile
 import streamlit as st
 from langchain_core.messages import HumanMessage
 
@@ -91,25 +92,37 @@ with st.sidebar:
 @st.cache_resource(show_spinner=False)
 def _init_backend(model_name: str):
     docs = cargar_todo()
-    
+
+    # ── NUEVO: si no hay chroma persistente, intentar seed empaquetado ──
+    # En local: chroma_db_v4/ ya existe → se salta el seed.
+    # En Cloud: chroma_db_v4/ no existe → descomprime chroma_db_v4.zip (0 llamadas a Gemini).
+    if not (PERSIST_DIR.exists() and any(PERSIST_DIR.iterdir())):
+        seed_zip = PERSIST_DIR.parent / f"{PERSIST_DIR.name}.zip"
+        if seed_zip.exists():
+            with st.spinner("📦 Descomprimiendo vectorstore precalculado…"):
+                with zipfile.ZipFile(seed_zip, "r") as zf:
+                    zf.extractall(".")
+            st.toast("✅ Vectorstore listo (seed empaquetado)", icon="📦")
+
     if PERSIST_DIR.exists() and any(PERSIST_DIR.iterdir()):
         vs = get_vectorstore()
     else:
+        # Fallback: si no había seed, reindexar (consume cuota — solo local sin zip)
         vs = build_chroma(docs, pausa_entre_lotes_seg=0)
-        
+
     graph = build_graph(vs, model_name=model_name)
-    
+
     tacticas = sorted(list(set(
-        d.metadata.get("tactica") for d in docs 
+        d.metadata.get("tactica") for d in docs
         if d.metadata.get("tactica") and d.metadata.get("fuente") == "curado"
     )))
-    
+
     # Lista de imágenes para el catálogo (ignorando el icono y aceptando .jpg/.png)
     imagenes = sorted([
-        p for p in (DATA_DIR / "imagenes").glob("*.*") 
+        p for p in (DATA_DIR / "imagenes").glob("*.*")
         if p.suffix.lower() in [".png", ".jpg", ".jpeg"] and "icono" not in p.name.lower()
     ])
-    
+
     return graph, len(docs), resumen_por_fuente(docs), tacticas, imagenes
 
 with st.spinner("⏳ Inicializando base de conocimiento…"):

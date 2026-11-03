@@ -51,3 +51,7 @@ test_graph_smoke.py
 test_chat_commands.py
 comparar_busqueda.py
 ver_top4.py
+
+
+# --- Seed del vectorstore (sí se sube comprimido) ---
+!chroma_db_v4.zip
