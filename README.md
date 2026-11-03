@@ -25,7 +25,7 @@ Agente de IA generativa con RAG sobre táctica futbolística histórica y modern
 
 ## 🖼️ Vistazo al asistente
 
-🚀 **Demo pública:** <pendiente-url-streamlit-cloud>
+🚀 **Demo pública:** <https://asistente-experto-tacticas-futbol-rag-xuz7x9jvguray8lznairbf.streamlit.app/>
 
 | Chat Inteligente | Catálogo Visual | Búsqueda Guiada (sidebar) |
 |---|---|---|
@@ -82,7 +82,7 @@ flowchart LR
 
 ## 🚀 Demo pública
 
-**URL:** [<pendiente-url-streamlit-cloud>](https://Asistente-experto-tacticas-futbol-rag-xuz7x9jvguray8lznairbf.streamlit.app/)
+**URL:** [(https://Asistente-experto-tacticas-futbol-rag-xuz7x9jvguray8lznairbf.streamlit.app/)]
 
 
 La app incluye tres modos de uso: **Chat Inteligente** (con memoria y trazabilidad de documentos), **Catálogo Visual** (galería interactiva de formaciones) y **Búsqueda Guiada** (explorador por filtros en la barra lateral). Se incluyen respuestas generadas en formato ficha y modo conceptua

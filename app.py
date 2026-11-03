@@ -62,11 +62,11 @@ def set_prompt(texto):
 # Sidebar y Selector de Modelo
 # ---------------------------------------------------------------------------
 with st.sidebar:
-    icono_path = DATA_DIR / "imagenes" / "Icono.jpg"
+    icono_path = DATA_DIR / "imagenes" / "Icono.png"
     if icono_path.exists():
         _, col_icon, _ = st.columns([1, 2, 1])
         with col_icon:
-            st.image(str(icono_path), use_container_width=True)
+            st.image(str(icono_path.resolve()), width="stretch")
     
     st.markdown("<h3 style='text-align: center; margin-top: 0;'>Asistente Táctico</h3>", unsafe_allow_html=True)
     st.markdown("<p style='text-align: center; font-size: 0.8rem; color: gray;'>RAG con Gemini + LangGraph</p>", unsafe_allow_html=True)
@@ -78,7 +78,7 @@ with st.sidebar:
 
     st.divider()
     
-    # NUEVO: Selector de modelo
+    # Selector de modelo
     st.markdown("### 🧠 Motor de IA")
     modelo_sel = st.selectbox(
         "Selecciona el modelo:",
@@ -114,8 +114,9 @@ def _init_backend(model_name: str):
         if d.metadata.get("tactica") and d.metadata.get("fuente") == "curado"
     )))
 
+    # Forzamos rutas absolutas para evitar problemas en Cloud
     imagenes = sorted([
-        p for p in (DATA_DIR / "imagenes").glob("*.*")
+        p.resolve() for p in (DATA_DIR / "imagenes").glob("*.*")
         if p.suffix.lower() in [".png", ".jpg", ".jpeg"] and "icono" not in p.name.lower()
     ])
 
@@ -132,7 +133,7 @@ def _imagenes_locales(docs, texto_respuesta=""):
     for d in docs:
         url = d.metadata.get("imagen_url") or ""
         if url and not url.startswith("http"):
-            p = DATA_DIR / url
+            p = (DATA_DIR / url).resolve() # Forzamos ruta absoluta
             if p.exists() and p not in imagenes_res:
                 imagenes_res.append(p)
                 
@@ -140,8 +141,8 @@ def _imagenes_locales(docs, texto_respuesta=""):
     todas = list((DATA_DIR / "imagenes").glob("*.png"))
     for img_path in todas:
         nombre_limpio = img_path.stem.replace("_", " ").lower()
-        if nombre_limpio in texto_lower and img_path not in imagenes_res:
-            imagenes_res.append(img_path)
+        if nombre_limpio in texto_lower and img_path.resolve() not in imagenes_res:
+            imagenes_res.append(img_path.resolve())
     return imagenes_res
 
 def _limpiar_linea_imagen(texto: str, hay_imagen_local: bool) -> str:
@@ -237,7 +238,7 @@ with tab_chat:
         for i, ej in enumerate(ejemplos):
             cols[i].button(ej, on_click=set_prompt, args=(ej,), use_container_width=True)
 
-    # Sugerencias de preguntas
+    # Sugerencias de preguntas (FIX: Usar set_prompt para disparar el flujo)
     preguntas_sugeridas = [
         "¿Qué es el Catenaccio y qué formación base usaba?",
         "¿Y quién fue su entrenador?",
@@ -251,9 +252,8 @@ with tab_chat:
     cols = st.columns(3)
     for i, q in enumerate(preguntas_sugeridas):
         with cols[i % 3]:
-            if st.button(q, use_container_width=True):
-                st.session_state.mensajes_ui.append({"role": "user", "content": q})
-                # Aquí va la lógica de disparar la pregunta al grafo
+            if st.button(q, use_container_width=True, key=f"sugerida_{i}"):
+                set_prompt(q)
                 st.rerun()
 
     prompt_input = st.chat_input("Pregunta sobre táctica…")
@@ -302,11 +302,11 @@ with tab_catalogo:
     st.header("Galería de Tácticas")
     st.caption("Explora visualmente las formaciones y tácticas. Haz clic en 'Preguntar' para que el asistente te explique los detalles.")
     
-    # Cuadrícula de 3 columnas
+    # Cuadrícula de 3 columnas (FIX: width="stretch")
     cols = st.columns(3)
     for i, img_path in enumerate(imagenes):
         with cols[i % 3]:
-            st.image(str(img_path), use_container_width=True)
+            st.image(str(img_path), width="stretch")
             nombre_limpio = img_path.stem.replace("_", " ").title()
             st.markdown(f"**{nombre_limpio}**")
             if st.button(f"Preguntar por {nombre_limpio}", key=f"btn_cat_{i}", use_container_width=True):
