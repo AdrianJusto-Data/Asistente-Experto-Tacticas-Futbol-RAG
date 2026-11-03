@@ -237,6 +237,25 @@ with tab_chat:
         for i, ej in enumerate(ejemplos):
             cols[i].button(ej, on_click=set_prompt, args=(ej,), use_container_width=True)
 
+    # Sugerencias de preguntas
+    preguntas_sugeridas = [
+        "¿Qué es el Catenaccio y qué formación base usaba?",
+        "¿Y quién fue su entrenador?",
+        '¿Qué era el "tercer defensa" en los 50?',
+        "¿Qué equipos usaron el 5-3-2 y quién lo popularizó?",
+        "¿En qué se diferencia el Gegenpressing del Tiki-Taka?",
+        "¿Qué es la táctica del Boca Juniors de 2020?"
+    ]
+
+    st.markdown("### 💡 Prueba estas preguntas:")
+    cols = st.columns(3)
+    for i, q in enumerate(preguntas_sugeridas):
+        with cols[i % 3]:
+            if st.button(q, use_container_width=True):
+                st.session_state.mensajes_ui.append({"role": "user", "content": q})
+                # Aquí va la lógica de disparar la pregunta al grafo
+                st.rerun()
+
     prompt_input = st.chat_input("Pregunta sobre táctica…")
     prompt = prompt_input
     if not prompt and st.session_state.prompt_generado:

@@ -90,8 +90,12 @@ La app incluye tres modos de uso: **Chat Inteligente** (con memoria y trazabilid
 3 preguntas de prueba:
 
 1. `¿Qué es el Catenaccio y qué formación base usaba?` → ficha + imagen
-2. `¿Y quién fue su entrenador?` → reformulador en acción
-3. `¿Qué es la táctica del Boca Juniors de 2020?` → anti-alucinación (`"Lo siento, esa información no se encuentra en mi base de datos táctica actual."`)
+2. `¿Y quién fue su entrenador?` → **memoria**: el reformulador resuelve
+3. `¿Qué era el "tercer defensa" en el fútbol de los 50?` → **modo conceptual** (V5) desde el libro
+4. `¿Qué equipos usaron el 5-3-2 y quién lo popularizó?` → consulta de atributos en metadata
+5. `¿En qué se diferencia el Gegenpressing del Tiki-Taka?` → comparación cruzada de fuentes
+6. `¿Qué es la táctica del Boca Juniors de 2020?` → **anti-alucinación** (`"Lo siento, esa información no se encuentra en mi base de datos táctica actual."`)
+
 
 > Primer arranque Cloud: ~30-45 s (Chroma efímero). Después: ~2-5 s por consulta.
 
